@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Serverless Notes API using Lambda, API Gateway, DynamoDB
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Timeout: 10
+    MemorySize: 256
+
+Resources:
+
+  NotesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: NotesTable
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  NotesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: NotesAPI
+      Handler: lambda_function.lambda_handler
+      CodeUri: ../lambda/
+      Environment:
+        Variables:
+          TABLE_NAME: NotesTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: NotesTable
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            Path: /notes
+            Method: ANY
+        ApiEventById:
+          Type: HttpApi
+          Properties:
+            Path: /notes/{id}
+            Method: ANY
+
+Outputs:
+  ApiUrl:
+    Description: "Invoke URL"
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
