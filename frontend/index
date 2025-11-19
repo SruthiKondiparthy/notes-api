@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Notes App</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: auto; }
+    .note { padding: 10px; border: 1px solid #ccc; margin: 8px 0; }
+    .note-title { font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <h1>📒 Notes App</h1>
+
+  <h2>Create Note</h2>
+  <input id="title" placeholder="Title" /><br><br>
+  <textarea id="content" placeholder="Content"></textarea><br><br>
+  <button onclick="createNote()">Create</button>
+
+  <h2>All Notes</h2>
+  <div id="notes"></div>
+
+  <script>
+    const API_BASE = "https://mqu0t9cz6c.execute-api.eu-central-1.amazonaws.com";
+
+    async function fetchNotes() {
+      const res = await fetch(`${API_BASE}/notes`);
+      const notes = await res.json();
+      const container = document.getElementById("notes");
+      container.innerHTML = "";
+
+      notes.forEach(n => {
+        const div = document.createElement("div");
+        div.className = "note";
+        div.innerHTML = `
+          <div class="note-title">${n.title}</div>
+          <div>${n.content}</div>
+          <button onclick="deleteNote('${n.id}')">Delete</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    async function createNote() {
+      const title = document.getElementById("title").value;
+      const content = document.getElementById("content").value;
+
+      await fetch(`${API_BASE}/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, content }),
+      });
+
+      fetchNotes();
+    }
+
+    async function deleteNote(id) {
+      await fetch(`${API_BASE}/notes/${id}`, {
+        method: "DELETE"
+      });
+      fetchNotes();
+    }
+
+    // Load notes on page start
+    fetchNotes();
+  </script>
+
+</body>
+</html>
